@@ -1,0 +1,122 @@
+{
+	"info": {
+		"_postman_id": "b2f2573c-adc3-4bc4-ad2e-49e77995d9ed",
+		"name": "weather",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "login",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e6476d90-c22d-433d-bf24-01ff0cd53f80",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.environment.set(\"access_token\", jsonData.result.access_token);",
+							"pm.variables.get(\"variable_key\");"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"username\": \"admin\",\n\t\"password\": \"admin\"\n}"
+				},
+				"url": {
+					"raw": "{{api_url}}/v1/login",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"v1",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "weather",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"name": "Content-Type",
+						"value": "{{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "{{access_token}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{api_url}}/v1/weather?location={{new_taipei}}",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"v1",
+						"weather"
+					],
+					"query": [
+						{
+							"key": "location",
+							"value": "{{new_taipei}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "{{access_token}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{api_url}}/v1/logout",
+					"host": [
+						"{{api_url}}"
+					],
+					"path": [
+						"v1",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

@@ -1,0 +1,2639 @@
+{
+	"info": {
+		"_postman_id": "b0db800b-f813-4bc3-9b04-7844babb0a94",
+		"name": "QIF_Endpoint_Test",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "auth app",
+			"item": [
+				{
+					"name": "TestSetup_Common",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "b62c43b6-5b6a-4e78-85f8-e8025950049e",
+								"type": "text/javascript",
+								"exec": [
+									"var helpers = eval(pm.globals.get(\"partner_api_helpers\"));",
+									"var randomId = helpers.makeId();",
+									"",
+									"helpers.admin_create_partner({",
+									"            \"admin_email\": pm.environment.get(\"qif_user_name\"),",
+									"            \"admin_name\": pm.environment.get(\"qif_user_name\"),",
+									"            \"admin_phone\": \"00-0000-0000\",",
+									"            \"admin_title\": \"XXO\",",
+									"            \"company_name\": \"QNAP\" + randomId,",
+									"            \"company_website\": \"https://www.qnap.com\",",
+									"            \"description\": \"QNAP company, qnap description.\"",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"dummy_partner_id\", res.json().result.partner_id);",
+									"    ",
+									"    // search user via qid",
+									"    return helpers.account_center_user_search(pm.environment.get(\"qif_user_name\"));",
+									"}).then(function (err, res) {",
+									"    var data = {};",
+									"    data[\"partner_id\"] = pm.environment.get(\"dummy_partner_id\");",
+									"    data[\"role_permission_id\"] = \"partner_admin\";",
+									"    data[\"qid\"] = pm.environment.get(\"qif_user_name\");",
+									"    // Create Role",
+									"    return helpers.admin_create_role(data);",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"role_qif_dummy_user_id\", res.json().result.results[0].role_id);",
+									"    let data = {",
+									"        \"name\": \"Dummy QNAP\" + randomId,",
+									"        \"app_path\": \"dummy_qnap_\" + randomId,",
+									"        \"partner_id\": pm.environment.get(\"dummy_partner_id\")",
+									"      };",
+									"    return helpers.create_app(data);",
+									"}).then(function(err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    pm.environment.set(\"app_\" + app_name + \"_id\", res.json().result.app_id);",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let data = {",
+									"        \"auth_type\": \"oauth2_non_expiring_access_tokens\",",
+									"        \"api_url\": pm.environment.get(\"mock_partner_api_url_internal\"),",
+									"        \"oauth2_client_id\": \"client_id\",",
+									"        \"oauth2_client_secret\": \"client_secret\",",
+									"        \"oauth2_auth_url\": pm.environment.get(\"mock_partner_api_url_internal\") + \"/oauth/auth\",",
+									"        \"oauth2_token_url\": pm.environment.get(\"mock_partner_api_url_internal\") + \"/oauth/token\"",
+									"    };",
+									"",
+									"    return helpers.update_app(app_id, data);",
+									"}).then(function (err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    return helpers.get_app(app_id);",
+									"}).then(function (err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    pm.environment.set(\"app_dummy_qnap_service_key\", res.json().result.service_key);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let data = {",
+									"        \"name\": \"New file in a folder\",",
+									"        \"description\": \"New File in a Folder\",",
+									"        \"slug\": trigger_slug,",
+									"        \"usage\": \"This is new file in your folder\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger(app_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    pm.environment.set(\"trigger_\" + trigger_slug + \"_id\", res.json().result.trigger_id);",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_1_name = \"nas\";",
+									"    let helper_text = \"Select NAS\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 1,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_1_name,",
+									"        \"label\": \"NAS\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_1_name = \"nas\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_1_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_2_name = \"folder_path\";",
+									"    let helper_text = \"Select Folder\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 2,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_2_name,",
+									"        \"label\": \"Folder Path\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_2_name = \"folder_path\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_2_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_3_name = \"file_type\";",
+									"    let helper_text = \"Select Type\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 3,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_3_name,",
+									"        \"label\": \"Types\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_3_name = \"file_type\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_3_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_1_slug = \"device_name\";",
+									"    let trigger_element_1_name = \"DeviceName\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_1_name + \"_name\", trigger_element_1_name);",
+									"    let data = {",
+									"        \"example\": \"MyNAS473\",",
+									"          \"name\": trigger_element_1_name,",
+									"          \"note\": \"The Device Name on myQNAPcloud\",",
+									"          \"slug\": trigger_element_1_slug,",
+									"          \"type\": \"string\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_1_slug = \"device_name\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_1_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_2_slug = \"file_url\";",
+									"    let trigger_element_2_name = \"FileUrl\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_2_name + \"_name\", trigger_element_2_name);",
+									"    let data = {",
+									"        \"example\": \"http://aa.bb.cc/1234\",",
+									"          \"name\": trigger_element_2_name,",
+									"          \"note\": \"The File urlof the file\",",
+									"          \"slug\": trigger_element_2_slug,",
+									"          \"type\": \"file_urls\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_2_slug = \"file_url\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_2_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_3_slug = \"file_name\";",
+									"    let trigger_element_3_name = \"FileName\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_3_name + \"_name\", trigger_element_3_name);",
+									"    let data = {",
+									"        \"example\": \"myfile.txt\",",
+									"          \"name\": trigger_element_3_name,",
+									"          \"note\": \"The File url of the file\",",
+									"          \"slug\": trigger_element_3_slug,",
+									"          \"type\": \"string\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_3_slug = \"file_name\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_3_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let action_slug = \"append_to_file\";",
+									"    let data = {",
+									"        \"name\": \"Append to File\",",
+									"        \"description\": \"Append to file\",",
+									"        \"slug\": action_slug,",
+									"        \"usage\": \"This is action\"",
+									"    };",
+									"",
+									"    return helpers.create_action(app_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_slug = \"append_to_file\";",
+									"    pm.environment.set(\"action_\" + action_slug + \"_id\", res.json().result.action_id);",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_1_name = \"nas\";",
+									"    let helper_text = \"Select NAS\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 1,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": action_essential_1_name,",
+									"        \"label\": \"NAS\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_1_name = \"nas\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_1_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_2_name = \"folder_path\";",
+									"    let helper_text = \"Select Folder\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 2,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": action_essential_2_name,",
+									"        \"label\": \"Service\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_2_name = \"folder_path\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_2_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_3_name = \"file_name\";",
+									"",
+									"    let helper_text = \"Enter a file name\";",
+									"    let data = {",
+									"      \"dependency_sequence\": 3,",
+									"      \"helper_text\": helper_text,",
+									"      \"input\": {",
+									"        \"rule\": {",
+									"          \"rule_type\": \"no_blank\"",
+									"        },",
+									"        \"metadata\": {",
+									"          \"metadata_type\": \"file_name\",",
+									"          \"text_input_type\": \"metadata\"",
+									"        },",
+									"      },",
+									"      \"input_type\": \"text\",",
+									"      \"is_private\": true,",
+									"      \"is_required\": true,",
+									"        \"key_name\": action_essential_3_name,",
+									"        \"label\": \"file name\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_3_name = \"file_name\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_3_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_4_name = \"content\";",
+									"",
+									"    let helper_text = \"Content\";",
+									"    let data = {",
+									"      \"dependency_sequence\": 3,",
+									"      \"helper_text\": helper_text,",
+									"      \"input\": {",
+									"        \"rule\": {",
+									"          \"rule_type\": \"no_blank\"",
+									"        },",
+									"        \"metadata\": {",
+									"          \"message_type\": \"short_text\",",
+									"          \"text_input_type\": \"message\"",
+									"        },",
+									"      },",
+									"      \"input_type\": \"text\",",
+									"      \"is_private\": true,",
+									"      \"is_required\": true,",
+									"        \"key_name\": action_essential_4_name,",
+									"        \"label\": \"content\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_4_name = \"content\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_4_name + \"_id\", res.json().result.action_essential_id);",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let data = {",
+									"        \"app_id\": app_id,",
+									"        \"app_user_id\": \"qif_dummy_user4\",",
+									"        \"name\": \"dummy_name\",",
+									"        \"access_token\": pm.environment.get(\"access_token\"),",
+									"        \"refresh_token\": pm.environment.get(\"access_token\"),",
+									"        \"expires_at\": \"2017-11-18T11:11:11.000Z\"",
+									"    };",
+									"    return helpers.create_connected_account(data);",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"connected_account_id\", res.json().result.connected_account_id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/version",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"version"
+							]
+						},
+						"description": "Dummy no op for creating a app"
+					},
+					"response": []
+				},
+				{
+					"name": "CreateStatusCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/status\";\nvar method = \"GET\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '';\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"qmiix-app-key\" && /\\s/.test(req_header[header_key])) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid channel key\"});\n\t\tbreak;\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTestSetupCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/test/setup\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\":{\"access_token\":\"taSvYgeXfM1HjVISJbUXVBIw1YUkKABm\",\"samples\":{\"triggers\":{\"new_file_in_a_folder\":{\"trigger_essentials\":{\"nas\":\"myNAS\",\"folder_path\":\"public\"}},\"any_new_song_in_album\":{\"trigger_essentials\":{\"nas\":\"myNAS\",\"singer\":\"ed sheeran\",\"album\":\"Hits Collection\"}}},\"triggerEssentialValidations\":{\"new_file_in_a_folder\":{\"value\":\"new.txt\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"folder_path\",\"value\":\"public\"}]}},\"triggerEssentialOptions\":{\"new_file_in_a_folder\":{\"value\":\"new.txt\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"folder_path\",\"value\":\"public\"}]},\"any_new_song_in_album\":{\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"singer\",\"value\":\"ed sheeran\"}]}},\"actions\":{\"append_to_file\":{\"action_essentials\":{\"album\":\"Sports\",\"url\":\"http://example.com/foo/jpg\",\"description\":\"AT&T Park\"}}},\"actionEssentialValidations\":{\"append_to_file\":{\"value\":\"me.jpg\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"album\",\"value\":\"Italy\"}]}},\"actionEssentialOptions\":{\"append_to_file\":{\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"album\",\"value\":\"myAlbum\"}]}}}}}';\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"qmiix-app-key\" && /\\s/.test(req_header[header_key])) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid channel key\"});\n\t\tbreak;\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [ {\"nas\":\"myNAS\",\"folder_path\":\"public\"} ] }';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"trigger_essentials\" in body) {\n    \tvar value = body[\"trigger_essentials\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing trigger essentials value\"});\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing trigger essentials key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerEssentialNASCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder/essentials/nas/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [{\"label\":\"NAS 1\",\"value\":\"nas_1_id\"},{\"label\":\"NAS 2\",\"value\":\"nas_2_id\"}]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"data\" in body) {\n    \tvar value = body[\"data\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing data value\"});\n    \t} else {\n    \t\tfor (var i = 0; i < value.length; i++) {\n    \t\t\tfor (var k in value[i]) {\n\t\t\t\t    if (value[i].hasOwnProperty(k)) {\n\t\t\t\t         if (value[i][k] === null) {\n\t\t\t\t         \tresp_status = 400;\n\t    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid data value\"});\n\t    \t\t\t\t\tbreak;\n\t\t\t\t         }\n\t\t\t\t    }\n    \t\t\t}\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing data key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerEssentialFolderPathCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder/essentials/folder_path/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [{\"label\": \"/share/Public\", \"value\": \"/share/Public\"}, {\"label\": \"/share/Web\", \"value\": \"/share/Web\"}]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"data\" in body) {\n    \tvar value = body[\"data\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing data value\"});\n    \t} else {\n    \t\tfor (var i = 0; i < value.length; i++) {\n    \t\t\tfor (var k in value[i]) {\n\t\t\t\t    if (value[i].hasOwnProperty(k)) {\n\t\t\t\t         if (value[i][k] === null) {\n\t\t\t\t         \tresp_status = 400;\n\t    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid data value\"});\n\t    \t\t\t\t\tbreak;\n\t\t\t\t         }\n\t\t\t\t    }\n    \t\t\t}\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing data key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerEssentialFileTypeCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder/essentials/file_type/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [{\"label\": \"jpg\", \"value\": \"jpg\"}, {\"label\": \"png\", \"value\": \"png\"}]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"data\" in body) {\n    \tvar value = body[\"data\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing data value\"});\n    \t} else {\n    \t\tfor (var i = 0; i < value.length; i++) {\n    \t\t\tfor (var k in value[i]) {\n\t\t\t\t    if (value[i].hasOwnProperty(k)) {\n\t\t\t\t         if (value[i][k] === null) {\n\t\t\t\t         \tresp_status = 400;\n\t    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid data value\"});\n\t    \t\t\t\t\tbreak;\n\t\t\t\t         }\n\t\t\t\t    }\n    \t\t\t}\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing data key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateActionCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/actions/append_to_file\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [ {\"album\":\"Sports\",\"url\":\"http://example.com/foo/jpg\",\"description\":\"AT&T Park\"} ]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"action_essentials\" in body) {\n    \tvar value = body[\"action_essentials\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing action essentials value\"});\n    \t} else {\n    \t\tfor (var k in value){\n\t\t\t    if (value.hasOwnProperty(k)) {\n\t\t\t         if (value[k] === null) {\n\t\t\t         \tresp_status = 400;\n    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid action essentials value\"});\n    \t\t\t\t\tbreak;\n\t\t\t         }\n\t\t\t    }\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing action essentials key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateActionEssentialFolderPathCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/actions/append_to_file/essentials/folder_path/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [{\"label\": \"/share/Public\", \"value\": \"/share/Public\"}, {\"label\": \"/share/Web\", \"value\": \"/share/Web\"}]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"data\" in body) {\n    \tvar value = body[\"data\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing data value\"});\n    \t} else {\n    \t\tfor (var i = 0; i < value.length; i++) {\n    \t\t\tfor (var k in value[i]) {\n\t\t\t\t    if (value[i].hasOwnProperty(k)) {\n\t\t\t\t         if (value[i][k] === null) {\n\t\t\t\t         \tresp_status = 400;\n\t    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid data value\"});\n\t    \t\t\t\t\tbreak;\n\t\t\t\t         }\n\t\t\t\t    }\n    \t\t\t}\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing data key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateActionEssentialNASCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/actions/append_to_file/essentials/nas/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [{\"label\":\"NAS 1\",\"value\":\"nas_1_id\"},{\"label\":\"NAS 2\",\"value\":\"nas_2_id\"}]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"data\" in body) {\n    \tvar value = body[\"data\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing data value\"});\n    \t} else {\n    \t\tfor (var i = 0; i < value.length; i++) {\n    \t\t\tfor (var k in value[i]) {\n\t\t\t\t    if (value[i].hasOwnProperty(k)) {\n\t\t\t\t         if (value[i][k] === null) {\n\t\t\t\t         \tresp_status = 400;\n\t    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid data value\"});\n\t    \t\t\t\t\tbreak;\n\t\t\t\t         }\n\t\t\t\t    }\n    \t\t\t}\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing data key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestAll_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f383aef8-74b7-4c42-8a78-633bb3aa7a65",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test index 0 is the same\"] = jsonData.result[0].test_index == 0;",
+									"tests[\"test index 1 is the same\"] = jsonData.result[1].test_index == 1;",
+									"tests[\"test index 2 is the same\"] = jsonData.result[2].test_index == 2;",
+									"tests[\"test index 3 is the same\"] = jsonData.result[3].test_index == 3;",
+									"tests[\"test index 4 is the same\"] = jsonData.result[4].test_index == 4;",
+									"tests[\"test index 5 is the same\"] = jsonData.result[5].test_index == 5;",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RunAppEndpointTestAll_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "87ca4c9c-6488-486f-8c6a-dab2c05b35f1",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							},
+							{
+								"key": "",
+								"value": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"async\": false }"
+						},
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/run",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"run"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestStatusResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "0cf40e00-5fba-401c-a6cc-ffc1b7f4d5f9",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status1 is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "d41c07c3-077e-4ff1-bf57-b549bf42a280",
+								"type": "text/javascript",
+								"exec": [
+									"setTimeout(function() {console.log('delay 5000ms')}, 5000)"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/0",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"0"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestSetupResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "7ae1d0e4-5cf2-460c-9cc3-8aea56345976",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case setup 0 is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case setup 1 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist 1-0 status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/1",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "66d58df8-adb6-4d6c-b11d-5c865be92a9a",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status1 is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/2",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointActionResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4fa02e51-6927-42b9-b805-38fd32db3ccc",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status3 is success\"] = jsonData.result.test_case[2].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[2].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status4 is success\"] = jsonData.result.test_case[3].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[3].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status5 is success\"] = jsonData.result.test_case[4].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[4].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/3",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerEssentialResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "53c10afc-4498-48d4-9191-52f2e7fd9217",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"checklist 2 status is success\"] = jsonData.result.test_case[0].checklist[2].checklist_status == \"success\";",
+									"tests[\"checklist 3 status is success\"] = jsonData.result.test_case[0].checklist[3].checklist_status == \"success\";",
+									"tests[\"checklist 4 status is success\"] = jsonData.result.test_case[0].checklist[4].checklist_status == \"success\";",
+									"tests[\"checklist 5 status is success\"] = jsonData.result.test_case[0].checklist[5].checklist_status == \"success\";",
+									"tests[\"checklist 6 status is success\"] = jsonData.result.test_case[0].checklist[6].checklist_status == \"success\";",
+									"tests[\"checklist 7 status is success\"] = jsonData.result.test_case[0].checklist[7].checklist_status == \"success\";",
+									"tests[\"checklist 8 status is success\"] = jsonData.result.test_case[0].checklist[8].checklist_status == \"success\";",
+									"tests[\"checklist 9 status is success\"] = jsonData.result.test_case[0].checklist[9].checklist_status == \"success\";",
+									"tests[\"checklist 10 status is success\"] = jsonData.result.test_case[0].checklist[10].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/4",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"4"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerEssentialWithDependencyResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "53c10afc-4498-48d4-9191-52f2e7fd9217",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"checklist 2 status is success\"] = jsonData.result.test_case[0].checklist[2].checklist_status == \"success\";",
+									"tests[\"checklist 3 status is success\"] = jsonData.result.test_case[0].checklist[3].checklist_status == \"success\";",
+									"tests[\"checklist 4 status is success\"] = jsonData.result.test_case[0].checklist[4].checklist_status == \"success\";",
+									"tests[\"checklist 5 status is success\"] = jsonData.result.test_case[0].checklist[5].checklist_status == \"success\";",
+									"tests[\"checklist 6 status is success\"] = jsonData.result.test_case[0].checklist[6].checklist_status == \"success\";",
+									"tests[\"checklist 7 status is success\"] = jsonData.result.test_case[0].checklist[7].checklist_status == \"success\";",
+									"tests[\"checklist 8 status is success\"] = jsonData.result.test_case[0].checklist[8].checklist_status == \"success\";",
+									"tests[\"checklist 9 status is success\"] = jsonData.result.test_case[0].checklist[9].checklist_status == \"success\";",
+									"tests[\"checklist 10 status is success\"] = jsonData.result.test_case[0].checklist[10].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status3 is success\"] = jsonData.result.test_case[2].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[2].checklist[0].checklist_status == \"success\";"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/5",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"5"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointActionEssentialResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c6ec5052-b645-4425-b0e1-4f8db4cd499e",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/8",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointActionEssentialWithDependencyResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "c6ec5052-b645-4425-b0e1-4f8db4cd499e",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status3 is success\"] = jsonData.result.test_case[2].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[2].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/7",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"7"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestLastResultSuccess_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "3477eb6f-c9b5-4b78-acd6-081ffab8e3b4",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test status is success\"] = jsonData.result.test_status == \"success\";"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "ee21ffda-d10d-43f5-b386-c08be777a200",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/result",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"result"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerEssentialFileTypeCase_400",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder/essentials/file_type/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 400;\nvar resp_body = '{\"data\":{}';\n"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateActionEssentialNASCase_400",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/actions/append_to_file/essentials/nas/options\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 400;\nvar resp_body = '{\"data\":{}';"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "RunAppEndpointTestAll_Partial_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "87ca4c9c-6488-486f-8c6a-dab2c05b35f1",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"async\": false }"
+						},
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/run",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"run"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerEssentialResult_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "55b1511d-29d5-40d5-927e-9609a0914583",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is failed\"] = jsonData.result.test_case[0].test_case_status == \"failed\";",
+									"tests[\"checklist 0 status is failed\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"failed\";",
+									"tests[\"checklist 1 status is failed\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"failed\";",
+									"tests[\"test status is failed\"] = jsonData.result.test_case[1].test_case_status == \"failed\";",
+									"tests[\"checklist status is failed\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"failed\";"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "d3b5d571-4f63-4c9c-b6af-f6d1374b4444",
+								"type": "text/javascript",
+								"exec": [
+									"setTimeout(function() {console.log('delay 6000ms')}, 6000)"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/6",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"6"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointActionEssentialResult_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "a6f84f6b-b1ee-48b0-a76a-050475cee701",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is failed\"] = jsonData.result.test_case[0].test_case_status == \"failed\";",
+									"tests[\"checklist 0 status is failed\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"failed\";",
+									"tests[\"checklist 1 status is failed\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"failed\";",
+									"tests[\"test status is failed\"] = jsonData.result.test_case[1].test_case_status == \"failed\";",
+									"tests[\"checklist status is failed\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"failed\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/8",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"8"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTestSetupCase_400",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/test/setup\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 400;\nvar resp_body = '{\"data\":{}';"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "RunAppEndpointTestAll_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "87ca4c9c-6488-486f-8c6a-dab2c05b35f1",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"async\": false }"
+						},
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/run",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"run"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestSetupResult_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5cc8115b-c43e-4945-a217-754a946a2d53",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is failed\"] = jsonData.result.test_case[0].test_case_status == \"failed\";",
+									"tests[\"checklist 0 status is failed\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"failed\";",
+									"tests[\"checklist 1 status is failed\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"failed\";",
+									"tests[\"test status is failed\"] = jsonData.result.test_case[1].test_case_status == \"failed\";",
+									"tests[\"checklist status is failed\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"failed\";"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "02e0ec50-66e6-43b2-8b52-4e203c2dcb1e",
+								"exec": [
+									"setTimeout(function() {console.log('delay 3000ms')}, 3000)"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/1",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerResult_Failed",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "5960073a-4938-4091-b0fe-62845d512296",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test400();"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/2",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestLastResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "aee26f83-28df-47a9-a4e0-593328718a30",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test status is failed\"] = jsonData.result.test_status == \"failed\";"
+								]
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "db41c064-f850-4440-a6c7-bf991d5e92ec",
+								"type": "text/javascript",
+								"exec": [
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/result",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"result"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TestDataTeardown",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9162046d-ddf6-4782-9839-b7d00998ff0c",
+								"type": "text/javascript",
+								"exec": [
+									"var helpers = eval(pm.globals.get(\"partner_api_helpers\"));",
+									"",
+									"let connected_account_id = pm.environment.get(\"connected_account_id\");",
+									"let app_id = helpers.get_app_id(\"dummy_qnap\");",
+									"let trigger_id = helpers.get_trigger_id(\"new_file_in_a_folder\");",
+									"let trigger_essential_1_id = helpers.get_trigger_essential_id(\"nas\");",
+									"let trigger_essential_2_id = helpers.get_trigger_essential_id(\"folder_path\");",
+									"let trigger_essential_3_id = helpers.get_trigger_essential_id(\"file_type\");",
+									"let trigger_element_1_id = helpers.get_trigger_element_id(\"device_name\");",
+									"let trigger_element_2_id = helpers.get_trigger_element_id(\"file_url\");",
+									"let trigger_element_3_id = helpers.get_trigger_element_id(\"file_name\");",
+									"",
+									"let action_id = helpers.get_action_id(\"append_to_file\");",
+									"let action_essential_1_id = helpers.get_action_essential_id(\"nas\");",
+									"let action_essential_2_id = helpers.get_action_essential_id(\"folder_path\");",
+									"let action_essential_3_id = helpers.get_action_essential_id(\"file_name\");",
+									"let action_essential_4_id = helpers.get_action_essential_id(\"content\");",
+									"",
+									"let category_iot_id = pm.environment.get(\"category_iot_id\");",
+									"",
+									"let role_dummy_user_1_id = pm.environment.get(\"role_dummy_user_1_id\");",
+									"let role_qif_dummy_user_id = pm.environment.get(\"role_qif_dummy_user_id\");",
+									"",
+									"let dummy_partner_id = pm.environment.get(\"dummy_partner_id\");",
+									"",
+									"helpers.remove_connected_account(connected_account_id).then(function () {",
+									"    return helpers.remove_action_essential(action_id, action_essential_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_4_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action(app_id, action_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger(app_id, trigger_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_app(app_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_category(category_iot_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_role(role_qif_dummy_user_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_role(role_dummy_user_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_partner(dummy_partner_id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/version",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"version"
+							]
+						},
+						"description": "Dummy no op for removing a app"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "no auth app",
+			"item": [
+				{
+					"name": "TestSetup_Common",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "b62c43b6-5b6a-4e78-85f8-e8025950049e",
+								"exec": [
+									"var helpers = eval(pm.globals.get(\"partner_api_helpers\"));",
+									"var randomId = helpers.makeId();",
+									"",
+									"helpers.admin_create_partner({",
+									"            \"admin_email\": pm.environment.get(\"qif_user_name\"),",
+									"            \"admin_name\": pm.environment.get(\"qif_user_name\"),",
+									"            \"admin_phone\": \"00-0000-0000\",",
+									"            \"admin_title\": \"XXO\",",
+									"            \"company_name\": \"QNAP\" + randomId,",
+									"            \"company_website\": \"https://www.qnap.com\",",
+									"            \"description\": \"QNAP company, qnap description.\"",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"dummy_partner_id\", res.json().result.partner_id);",
+									"    ",
+									"    // search user via qid",
+									"    return helpers.account_center_user_search(pm.environment.get(\"qif_user_name\"));",
+									"}).then(function (err, res) {",
+									"    var data = {};",
+									"    data[\"partner_id\"] = pm.environment.get(\"dummy_partner_id\");",
+									"    data[\"role_permission_id\"] = \"partner_admin\";",
+									"    data[\"qid\"] = pm.environment.get(\"qif_user_name\");",
+									"    // Create Role",
+									"    return helpers.admin_create_role(data);",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"role_qif_dummy_user_id\", res.json().result.results[0].role_id);",
+									"    let data = {",
+									"        \"name\": \"Dummy QNAP\" + randomId,",
+									"        \"app_path\": \"dummy_qnap_\" + randomId,",
+									"        \"partner_id\": pm.environment.get(\"dummy_partner_id\")",
+									"      };",
+									"    return helpers.create_app(data);",
+									"}).then(function(err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    pm.environment.set(\"app_\" + app_name + \"_id\", res.json().result.app_id);",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let data = {",
+									"        \"auth_type\": \"no_auth\",",
+									"        \"api_url\": pm.environment.get(\"mock_partner_api_url_internal\")",
+									"    };",
+									"",
+									"    return helpers.update_app(app_id, data);",
+									"}).then(function (err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    return helpers.get_app(app_id);",
+									"}).then(function (err, res) {",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    pm.environment.set(\"app_dummy_qnap_service_key\", res.json().result.service_key);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let data = {",
+									"        \"name\": \"New file in a folder\",",
+									"        \"description\": \"New File in a Folder\",",
+									"        \"slug\": trigger_slug,",
+									"        \"usage\": \"This is new file in your folder\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger(app_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    pm.environment.set(\"trigger_\" + trigger_slug + \"_id\", res.json().result.trigger_id);",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_1_name = \"nas\";",
+									"    let helper_text = \"Select NAS\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 1,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_1_name,",
+									"        \"label\": \"NAS\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_1_name = \"nas\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_1_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_2_name = \"folder_path\";",
+									"    let helper_text = \"Select Folder\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 2,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_2_name,",
+									"        \"label\": \"Folder Path\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_2_name = \"folder_path\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_2_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_essential_3_name = \"file_type\";",
+									"    let helper_text = \"Select Type\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 3,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": trigger_essential_3_name,",
+									"        \"label\": \"Types\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_essential(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_essential_3_name = \"file_type\";",
+									"    pm.environment.set(\"trigger_essential_\" + trigger_essential_3_name + \"_id\", res.json().result.trigger_essential_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_1_slug = \"device_name\";",
+									"    let trigger_element_1_name = \"DeviceName\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_1_name + \"_name\", trigger_element_1_name);",
+									"    let data = {",
+									"        \"example\": \"MyNAS473\",",
+									"          \"name\": trigger_element_1_name,",
+									"          \"note\": \"The Device Name on myQNAPcloud\",",
+									"          \"slug\": trigger_element_1_slug,",
+									"          \"type\": \"string\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_1_slug = \"device_name\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_1_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_2_slug = \"file_url\";",
+									"    let trigger_element_2_name = \"FileUrl\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_2_name + \"_name\", trigger_element_2_name);",
+									"    let data = {",
+									"        \"example\": \"http://aa.bb.cc/1234\",",
+									"          \"name\": trigger_element_2_name,",
+									"          \"note\": \"The File urlof the file\",",
+									"          \"slug\": trigger_element_2_slug,",
+									"          \"type\": \"file_urls\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_2_slug = \"file_url\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_2_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let trigger_slug = \"new_file_in_a_folder\";",
+									"    let trigger_id = pm.environment.get(\"trigger_\" + trigger_slug + \"_id\");",
+									"    let trigger_element_3_slug = \"file_name\";",
+									"    let trigger_element_3_name = \"FileName\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_3_name + \"_name\", trigger_element_3_name);",
+									"    let data = {",
+									"        \"example\": \"myfile.txt\",",
+									"          \"name\": trigger_element_3_name,",
+									"          \"note\": \"The File url of the file\",",
+									"          \"slug\": trigger_element_3_slug,",
+									"          \"type\": \"string\"",
+									"    };",
+									"",
+									"    return helpers.create_trigger_element(trigger_id, data);",
+									"}).then(function(err, res) {",
+									"    let trigger_element_3_slug = \"file_name\";",
+									"    pm.environment.set(\"trigger_element_\" + trigger_element_3_slug + \"_id\", res.json().result.trigger_element_id);",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let action_slug = \"append_to_file\";",
+									"    let data = {",
+									"        \"name\": \"Append to File\",",
+									"        \"description\": \"Append to file\",",
+									"        \"slug\": action_slug,",
+									"        \"usage\": \"This is action\"",
+									"    };",
+									"",
+									"    return helpers.create_action(app_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_slug = \"append_to_file\";",
+									"    pm.environment.set(\"action_\" + action_slug + \"_id\", res.json().result.action_id);",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_1_name = \"nas\";",
+									"    let helper_text = \"Select NAS\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 1,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": action_essential_1_name,",
+									"        \"label\": \"NAS\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_1_name = \"nas\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_1_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_2_name = \"folder_path\";",
+									"    let helper_text = \"Select Folder\";",
+									"    let data = {",
+									"        \"dependency_sequence\": 2,",
+									"        \"helper_text\": helper_text,",
+									"        \"input\": {",
+									"          \"rule\": {",
+									"            \"rule_type\": \"service\"",
+									"          }",
+									"        },",
+									"        \"input_type\": \"list\",",
+									"        \"is_private\": false,",
+									"        \"is_required\": true,",
+									"        \"key_name\": action_essential_2_name,",
+									"        \"label\": \"Service\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_2_name = \"folder_path\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_2_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_3_name = \"file_name\";",
+									"",
+									"    let helper_text = \"Enter a file name\";",
+									"    let data = {",
+									"      \"dependency_sequence\": 3,",
+									"      \"helper_text\": helper_text,",
+									"      \"input\": {",
+									"        \"rule\": {",
+									"          \"rule_type\": \"no_blank\"",
+									"        },",
+									"        \"metadata\": {",
+									"          \"metadata_type\": \"file_name\",",
+									"          \"text_input_type\": \"metadata\"",
+									"        },",
+									"      },",
+									"      \"input_type\": \"text\",",
+									"      \"is_private\": true,",
+									"      \"is_required\": true,",
+									"        \"key_name\": action_essential_3_name,",
+									"        \"label\": \"file name\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_3_name = \"file_name\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_3_name + \"_id\", res.json().result.action_essential_id);",
+									"    let action_slug = \"append_to_file\";",
+									"    let action_id = pm.environment.get(\"action_\" + action_slug + \"_id\");",
+									"    let action_essential_4_name = \"content\";",
+									"",
+									"    let helper_text = \"Content\";",
+									"    let data = {",
+									"      \"dependency_sequence\": 3,",
+									"      \"helper_text\": helper_text,",
+									"      \"input\": {",
+									"        \"rule\": {",
+									"          \"rule_type\": \"no_blank\"",
+									"        },",
+									"        \"metadata\": {",
+									"          \"message_type\": \"short_text\",",
+									"          \"text_input_type\": \"message\"",
+									"        },",
+									"      },",
+									"      \"input_type\": \"text\",",
+									"      \"is_private\": true,",
+									"      \"is_required\": true,",
+									"        \"key_name\": action_essential_4_name,",
+									"        \"label\": \"content\"",
+									"    };",
+									"",
+									"    return helpers.create_action_essential(action_id, data);",
+									"}).then(function(err, res) {",
+									"    let action_essential_4_name = \"content\";",
+									"    pm.environment.set(\"action_essential_\" + action_essential_4_name + \"_id\", res.json().result.action_essential_id);",
+									"    let app_name = \"dummy_qnap\";",
+									"    let app_id = pm.environment.get(\"app_\" + app_name + \"_id\");",
+									"    let data = {",
+									"        \"app_id\": app_id,",
+									"        \"app_user_id\": \"qif_dummy_user4\",",
+									"        \"name\": \"dummy_name\",",
+									"        \"access_token\": pm.environment.get(\"access_token\"),",
+									"        \"refresh_token\": pm.environment.get(\"access_token\"),",
+									"        \"expires_at\": \"2017-11-18T11:11:11.000Z\"",
+									"    };",
+									"    return helpers.create_connected_account(data);",
+									"}).then(function (err, res) {",
+									"    pm.environment.set(\"connected_account_id\", res.json().result.connected_account_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/version",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"version"
+							]
+						},
+						"description": "Dummy no op for creating a app"
+					},
+					"response": []
+				},
+				{
+					"name": "CreateStatusCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/status\";\nvar method = \"GET\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '';\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"qmiix-app-key\" && /\\s/.test(req_header[header_key])) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid channel key\"});\n\t\tbreak;\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTestSetupCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/test/setup\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\":{\"samples\":{\"triggers\":{\"new_file_in_a_folder\":{\"trigger_essentials\":{\"nas\":\"myNAS\",\"folder_path\":\"public\"}},\"any_new_song_in_album\":{\"trigger_essentials\":{\"nas\":\"myNAS\",\"singer\":\"ed sheeran\",\"album\":\"Hits Collection\"}}},\"triggerEssentialValidations\":{\"new_file_in_a_folder\":{\"value\":\"new.txt\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"folder_path\",\"value\":\"public\"}]}},\"triggerEssentialOptions\":{\"new_file_in_a_folder\":{\"value\":\"new.txt\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"folder_path\",\"value\":\"public\"}]},\"any_new_song_in_album\":{\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"singer\",\"value\":\"ed sheeran\"}]}},\"actions\":{\"append_to_file\":{\"action_essentials\":{\"album\":\"Sports\",\"url\":\"http://example.com/foo/jpg\",\"description\":\"AT&T Park\"}}},\"actionEssentialValidations\":{\"append_to_file\":{\"value\":\"me.jpg\",\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"album\",\"value\":\"Italy\"}]}},\"actionEssentialOptions\":{\"append_to_file\":{\"data\":[{\"dependency_sequence\":0,\"key_name\":\"nas\",\"value\":\"myNAS\"},{\"dependency_sequence\":1,\"key_name\":\"album\",\"value\":\"myAlbum\"}]}}}}}';\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"qmiix-app-key\" && /\\s/.test(req_header[header_key])) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid channel key\"});\n\t\tbreak;\n\t}\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateTriggerCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/triggers/new_file_in_a_folder\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [ {\"nas\":\"myNAS\",\"folder_path\":\"public\"} ] }';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"trigger_essentials\" in body) {\n    \tvar value = body[\"trigger_essentials\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing trigger essentials value\"});\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing trigger essentials key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "CreateActionCase_200",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/javascript"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "var path = \"/qmiix/v1/actions/append_to_file\";\nvar method = \"POST\";\nvar delay = 0;  // milli seconds\nvar resp_status = 200;\nvar resp_body = '{\"data\": [ {\"album\":\"Sports\",\"url\":\"http://example.com/foo/jpg\",\"description\":\"AT&T Park\"} ]}';\n\nfor (var header_key in req_header) {\n\tif (header_key.toLowerCase() === \"authorization\" && req_header[header_key].indexOf(\"invalid\") >= 0) {\n\t\tresp_status = 401;\n\t\tresp_body = JSON.stringify({code: -1, message: \"invalid access token\"});\n\t\tbreak;\n\t}\n}\nif (req_body !== '') {\n    var body = JSON.parse(req_body);\n    if (\"action_essentials\" in body) {\n    \tvar value = body[\"action_essentials\"];\n    \tif (value === null) {\n    \t\tresp_status = 400;\n    \t\tresp_body = JSON.stringify({code: -1, message: \"missing action essentials value\"});\n    \t} else {\n    \t\tfor (var k in value){\n\t\t\t    if (value.hasOwnProperty(k)) {\n\t\t\t         if (value[k] === null) {\n\t\t\t         \tresp_status = 400;\n    \t\t\t\t\tresp_body = JSON.stringify({code: -1, message: \"invalid action essentials value\"});\n    \t\t\t\t\tbreak;\n\t\t\t         }\n\t\t\t    }\n\t\t\t}\n    \t}\n    } else {\n    \tresp_status = 400;\n    \tresp_body = JSON.stringify({code: -1, message: \"missing action essentials key\"});\n    }\n}"
+						},
+						"url": {
+							"raw": "{{mock_partner_api_url}}/route?override=true",
+							"host": [
+								"{{mock_partner_api_url}}"
+							],
+							"path": [
+								"route"
+							],
+							"query": [
+								{
+									"key": "override",
+									"value": "true"
+								}
+							]
+						},
+						"description": "The request was a success."
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestAll_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "f383aef8-74b7-4c42-8a78-633bb3aa7a65",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test index 0 is the same\"] = jsonData.result[0].test_index == 0;",
+									"tests[\"test index 1 is the same\"] = jsonData.result[1].test_index == 1;",
+									"tests[\"test index 1's test_case_id is the same\"] = jsonData.result[1].test_case[0].test_case_id == 0;",
+									"tests[\"test index 1's test_case 0's checklist_id is the same\"] = jsonData.result[1].test_case[0].checklist[4].checklist_id == 15;",
+									"",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "RunAppEndpointTestAll_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "87ca4c9c-6488-486f-8c6a-dab2c05b35f1",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							},
+							{
+								"key": "",
+								"value": ""
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{ \"async\": false }"
+						},
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/run",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"run"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTestSetupResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "7ae1d0e4-5cf2-460c-9cc3-8aea56345976",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case setup 0 is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case setup 1 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist 1-0 status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/1",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointTriggerResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "66d58df8-adb6-4d6c-b11d-5c865be92a9a",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status1 is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/2",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GetAppEndpointActionResult_OK",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"id": "4fa02e51-6927-42b9-b805-38fd32db3ccc",
+								"type": "text/javascript",
+								"exec": [
+									"var validators = eval(pm.globals.get(\"loadValidators\"));",
+									"validators.test200();",
+									"",
+									"var jsonData;",
+									"jsonData = JSON.parse(responseBody);",
+									"tests[\"test case status is success\"] = jsonData.result.test_case[0].test_case_status == \"success\";",
+									"tests[\"checklist 0 status is success\"] = jsonData.result.test_case[0].checklist[0].checklist_status == \"success\";",
+									"tests[\"checklist 1 status is success\"] = jsonData.result.test_case[0].checklist[1].checklist_status == \"success\";",
+									"tests[\"test case status2 is success\"] = jsonData.result.test_case[1].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[1].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status3 is success\"] = jsonData.result.test_case[2].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[2].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status4 is success\"] = jsonData.result.test_case[3].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[3].checklist[0].checklist_status == \"success\";",
+									"tests[\"test case status5 is success\"] = jsonData.result.test_case[4].test_case_status == \"success\";",
+									"tests[\"checklist status is success\"] = jsonData.result.test_case[4].checklist[0].checklist_status == \"success\";"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{qif_admin_access_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/partner/app/{{app_dummy_qnap_id}}/endpoint/test/3",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"partner",
+								"app",
+								"{{app_dummy_qnap_id}}",
+								"endpoint",
+								"test",
+								"3"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TestDataTeardown",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"id": "9162046d-ddf6-4782-9839-b7d00998ff0c",
+								"type": "text/javascript",
+								"exec": [
+									"var helpers = eval(pm.globals.get(\"partner_api_helpers\"));",
+									"",
+									"let connected_account_id = pm.environment.get(\"connected_account_id\");",
+									"let app_id = helpers.get_app_id(\"dummy_qnap\");",
+									"let trigger_id = helpers.get_trigger_id(\"new_file_in_a_folder\");",
+									"let trigger_essential_1_id = helpers.get_trigger_essential_id(\"nas\");",
+									"let trigger_essential_2_id = helpers.get_trigger_essential_id(\"folder_path\");",
+									"let trigger_essential_3_id = helpers.get_trigger_essential_id(\"file_type\");",
+									"let trigger_element_1_id = helpers.get_trigger_element_id(\"device_name\");",
+									"let trigger_element_2_id = helpers.get_trigger_element_id(\"file_url\");",
+									"let trigger_element_3_id = helpers.get_trigger_element_id(\"file_name\");",
+									"",
+									"let action_id = helpers.get_action_id(\"append_to_file\");",
+									"let action_essential_1_id = helpers.get_action_essential_id(\"nas\");",
+									"let action_essential_2_id = helpers.get_action_essential_id(\"folder_path\");",
+									"let action_essential_3_id = helpers.get_action_essential_id(\"file_name\");",
+									"let action_essential_4_id = helpers.get_action_essential_id(\"content\");",
+									"",
+									"let category_iot_id = pm.environment.get(\"category_iot_id\");",
+									"",
+									"let role_dummy_user_1_id = pm.environment.get(\"role_dummy_user_1_id\");",
+									"let role_qif_dummy_user_id = pm.environment.get(\"role_qif_dummy_user_id\");",
+									"",
+									"let dummy_partner_id = pm.environment.get(\"dummy_partner_id\");",
+									"",
+									"helpers.remove_connected_account(connected_account_id).then(function () {",
+									"    return helpers.remove_action_essential(action_id, action_essential_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action_essential(action_id, action_essential_4_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_action(app_id, action_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_essential(trigger_id, trigger_essential_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_2_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger_element(trigger_id, trigger_element_3_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_trigger(app_id, trigger_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.remove_app(app_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_category(category_iot_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_role(role_qif_dummy_user_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_role(role_dummy_user_1_id);",
+									"}).then(function (err, res) {",
+									"    return helpers.admin_delete_partner(dummy_partner_id);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{qif_backend_url}}/v1/version",
+							"host": [
+								"{{qif_backend_url}}"
+							],
+							"path": [
+								"v1",
+								"version"
+							]
+						},
+						"description": "Dummy no op for removing a app"
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "bafc1290-2c1f-40c8-82f2-1456d9c3d89e",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "69534cf3-4b0a-46a0-bf3f-383b1caaf146",
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	]
+}
