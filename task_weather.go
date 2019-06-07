@@ -16,8 +16,7 @@ const (
 	NEW_TAIPEI = "新北市"
 	TAOYUAN    = "桃園市"
 
-	//ONE_HOUR = 3600
-	ONE_HOUR = 60
+	ONE_HOUR = 3600
 )
 
 func prepareRequest(location string) *http.Request {
